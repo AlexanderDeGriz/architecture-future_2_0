@@ -1,0 +1,83 @@
+@startuml Будущее_2.0_DFD_Уровень2
+
+top to bottom direction
+
+skinparam {
+  defaultTextAlignment center
+  rectangle {
+    BackgroundColor #F5F5F5
+    BorderColor #333
+  }
+  database {
+    BackgroundColor #E6F3FF
+    BorderColor #0066CC
+  }
+  queue {
+    BackgroundColor #FFE6E6
+    BorderColor #CC0000
+  }
+  cloud {
+    BackgroundColor #E6FFE6
+    BorderColor #00CC00
+  }
+  arrow {
+    Color #666666
+  }
+}
+
+rectangle "Врачи/Операторы" as doctors
+rectangle "Финтех-клиенты" as clients
+rectangle "Аналитики" as analysts
+
+cloud "Медицинский домен" as medical {
+  rectangle "1. Приём пациента" as admit
+  rectangle "2. Диагностика ИИ" as diagnose
+  rectangle "3. Сохранение результатов" as save_medical
+}
+
+cloud "Финансовый домен" as finance {
+  rectangle "1. Обработка платежей" as payments
+  rectangle "2. Кредитный скоринг" as scoring
+}
+
+cloud "Аналитический домен" as analytics {
+  rectangle "1. Построение отчётов" as reporting
+  rectangle "2. Аналитика данных" as analysis
+}
+
+database "MongoDB\n(истории болезней)" as mongo
+database "PostgreSQL\n(транзакции)" as postgres
+database "Qlik Sense\n(витрины)" as qlik
+
+queue "Kafka\n(шина событий)" as kafka
+rectangle "API Gateway" as gateway
+database "Legacy DWH\n(SQL Server 2008)" as legacy
+
+doctors --> admit : Данные пациента
+admit --> diagnose : Клинические данные
+diagnose --> save_medical : Результаты диагностики
+save_medical --> mongo : Сохранение
+save_medical --> kafka : Событие "Услуга оказана"
+
+clients --> payments : Платежные запросы
+payments --> scoring : Данные для скоринга
+scoring --> postgres : Сохранение
+payments --> kafka : Событие "Платеж"
+
+kafka --> payments : Запрос на оплату
+kafka --> reporting : Данные для отчетов
+
+reporting --> analysis : Агрегированные данные
+analysis --> qlik : Визуализации
+
+gateway --> reporting : API-запросы
+gateway --> payments : API-запросы
+
+legacy --> mongo : Миграция данных
+legacy --> postgres : Миграция данных
+legacy --> qlik : Исторические данные
+
+analysts --> qlik : Запрос отчетов
+qlik --> analysts : Визуализации
+
+@enduml
