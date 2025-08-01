@@ -1,0 +1,72 @@
+@startuml DFD_Будущее_2.0_Уровень2
+
+top to bottom direction
+
+skinparam {
+  defaultTextAlignment center
+  rectangle {
+    BackgroundColor #F5F5F5
+    BorderColor #333
+  }
+  database {
+    BackgroundColor #E6F3FF
+    BorderColor #0066CC
+  }
+  queue {
+    BackgroundColor #FFE6E6
+    BorderColor #CC0000
+  }
+  arrow {
+    Color #666666
+  }
+}
+
+actor "Оператор" as operator
+rectangle "Клиентский интерфейс\n(Power Builder)" as ui
+database "DWH\n(SQL Server 2008)" as dwh
+rectangle "ETL сервис\n(Apache NiFi)" as etl
+queue "Kafka" as kafka
+
+package "Финансовый домен" {
+  rectangle "Финтех API\n(Golang/Java)" as finance_api
+  database "БД Финтех сервисы\n(PostgreSQL)" as finance_db
+}
+
+package "Медицинский домен" {
+  rectangle "Медицинские сервисы\n(Java Spring Boot)" as medical_api
+  database "БД Медицинского сервиса\n(MongoDB)" as medical_db
+  rectangle "ИИ-сервисы\n(Python)" as ai
+}
+
+package "Аналитический домен" {
+  rectangle "Витрина данных\n(Qlik Sense)" as bi
+  rectangle "API Gateway\n(Spring Boot)" as gateway
+  rectangle "Портал бизнес-пользователей" as portal
+}
+
+actor "Пользователь" as user
+
+' Потоки данных
+operator --> ui : "Медицинские данные"
+ui --> dwh : "Сохранение данных"
+dwh --> etl : "Выгрузка данных\n(по расписанию/CDC)"
+etl --> kafka : "Трансформированные и валидированные\nсобытия (JSON)"
+
+kafka --> finance_api : "Финансовые события"
+finance_api --> finance_db : "Сохранение транзакций"
+
+kafka --> medical_api : "Медицинские события"
+medical_api --> medical_db : "Сохранение данных"
+medical_api --> ai : "Запросы на анализ"
+
+kafka --> bi : "Стриминг данных\n(Kafka Connect)"
+bi --> gateway : "REST API"
+gateway --> portal : "Данные для отчетов"
+portal --> user : "Интерактивные дашборды"
+
+' Дополнительные интеграции
+finance_api --> gateway : "API-запросы"
+medical_api --> gateway : "API-запросы"
+user --> portal : "Запросы аналитики"
+
+@enduml
